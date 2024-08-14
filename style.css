@@ -21,6 +21,7 @@ body{
 
     .head{
         width: 100%;
+        background-color: darkgray;
         gap: 4rem;
         display: flex;
         align-items: center;
@@ -54,18 +55,19 @@ body{
         .tasks{
             width: 100%;
             display: flex;
-            justify-content: space-between;
-
-        .task-title{
-
-        }    
+            justify-content: space-between;   
             
 
         }
         .task{
-            width: 60%;
+            width: 100%;
             gap: 1rem;
             display: flex;
+
+
+            .task-title{
+                width: 40%;
+            } 
             
             
         }

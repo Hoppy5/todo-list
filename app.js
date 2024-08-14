@@ -7,7 +7,10 @@ if (!addbutton || !saveButton || !formDiv || !taskListDiv) {
     console.error("Les éléments nécessaires n'ont pas été trouvés dans le DOM.");
 }
 
-var tasks = [];
+var tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+// Afficher les tâches existantes au chargement de la page
+updateTaskList();
 
 // Affichage du formulaire
 addbutton.addEventListener("click", function () {
@@ -25,6 +28,9 @@ saveButton.addEventListener("click", function () {
             "description": descriptionv,
             "status": "Not started"
         });
+
+        // Sauvegarder les tâches dans localStorage
+        localStorage.setItem('tasks', JSON.stringify(tasks));
 
         // Mettre à jour l'affichage de la liste des tâches
         updateTaskList();
@@ -46,12 +52,49 @@ function updateTaskList() {
     // Vider le contenu existant avant d'ajouter les tâches mises à jour
     taskListDiv.innerHTML = '';
 
-    for (let [index, task] of tasks.entries()) {
-        // Ajouter chaque tâche au conteneur de la liste des tâches
-        taskListDiv.innerHTML += `<div class="task">
-                <div class="task-title">${task.title}</div>
-                <div class="description">${task.description}</div>
-                <div class="status">${task.status}</div>
-            </div>`;
-    }
+    tasks.forEach(function (task, index) {
+        // Créer un élément div pour la tâche
+        let taskDiv = document.createElement('div');
+        taskDiv.className = 'task';
+
+        // Ajouter les détails de la tâche
+        taskDiv.innerHTML = `
+            <div class="task-title">${task.title}</div>
+            <div class="description">${task.description}</div>
+            <div class="status">
+                <select onchange="changeStatus(${index}, this.value)">
+                    <option value="Not started" ${task.status === 'Not started' ? 'selected' : ''}>Not started</option>
+                    <option value="In progress" ${task.status === 'In progress' ? 'selected' : ''}>In progress</option>
+                    <option value="Finished" ${task.status === 'Finished' ? 'selected' : ''}>Finished</option>
+                </select>
+            </div>
+            <button onclick="deleteTask(${index})">Supprimer</button>
+        `;
+
+        // Ajouter l'élément de tâche au conteneur de la liste
+        taskListDiv.appendChild(taskDiv);
+    });
+}
+
+// Fonction pour changer le statut d'une tâche
+function changeStatus(index, newStatus) {
+    tasks[index].status = newStatus;
+
+    // Sauvegarder les tâches mises à jour dans localStorage
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+
+    // Mettre à jour l'affichage de la liste des tâches
+    updateTaskList();
+}
+
+// Fonction pour supprimer une tâche
+function deleteTask(index) {
+    // Supprimer la tâche du tableau
+    tasks.splice(index, 1);
+
+    // Sauvegarder les tâches mises à jour dans localStorage
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+
+    // Mettre à jour l'affichage de la liste des tâches
+    updateTaskList();
 }
