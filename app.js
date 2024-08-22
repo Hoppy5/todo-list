@@ -8,6 +8,9 @@ try{
     let todos = []
     if (todosInStorage){
         todos = JSON.parse(todosInStorage)
+
+        console.log(todos);
+        
     }
     const list = new TodoList(todos)
     list.appendTo(document.querySelector('.container'))
@@ -18,6 +21,5 @@ try{
     })
     alertElement.innerText = "Impossible de charger les elements"
     document.body.prepend(alertElement)
-    console.log(e)
 }
 

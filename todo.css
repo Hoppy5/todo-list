@@ -14,7 +14,7 @@
 
     button:active {
         background-color: #0f6fa3; 
-        transform: scale(0.98)
+        transform: scale(0.90)
     }
 
     button:hover {
@@ -123,6 +123,7 @@ table {
         justify-content: space-around;
 
         td {
+            max-width: 25%;
             padding: .8rem 0;
 
         }

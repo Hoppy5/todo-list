@@ -1,4 +1,4 @@
-import { createElement} from "../functions/dom.js"
+import { createElement } from "../functions/dom.js"
 
 /**
  * @typedef {object} Todo
@@ -56,12 +56,12 @@ export class TodoList {
         </div>        
         `
         // Loop for generating todos
-       this.#listElement = document.querySelector('tbody')
+        this.#listElement = document.querySelector('tbody')
         for (const todo of this.#todos) {
-            const t = new TodoListItem(todo)
-            this.#listElement.append(t.element)  
+            const t = new TodoListItem(todo,this)
+            this.#listElement.append(t.element)
         }
-              
+
         // dispaying adding todo form
         let popAjout = document.querySelector('.pop-ajout')
         document.querySelector('.newtask').addEventListener('click', function () {
@@ -69,27 +69,74 @@ export class TodoList {
         })
 
         //undiisplaying adding form
-        document.querySelector('.fermer').addEventListener('click',()=>{
+        document.querySelector('.fermer').addEventListener('click', () => {
             popAjout.style.display = 'none'
         })
-      
-        // adding a new task
-        document.querySelector('#addingForm').addEventListener('submit', e => this.#onSubmit(e))
-        
+
         //chaging span's class
         let statusSpans = document.querySelectorAll('.statusTr span')
         for (const span of statusSpans) {
             if (span.innerText === 'not started') {
                 span.classList.remove('span-progres')
                 span.classList.add('span-not')
-            }
-            if(span.innerText === 'done'){
+            } else if (span.innerText === 'done') {
                 span.classList.remove('span-progres')
                 span.classList.add('span-done')
             }
         }
 
-        //view task
+        // adding a new task
+        document.querySelector('#addingForm').addEventListener('submit', e => this.#onSubmit(e))
+
+
+        
+        // Add event listener to all view buttons
+        document.querySelectorAll('.viewButton').forEach(button => {
+            button.addEventListener('click', e => {
+                e.preventDefault();
+
+                // Find the closest parent <tr> element
+                let parentRow = button.closest('tr');
+
+                // Extract the task details from the parent row
+                let title = parentRow.querySelector('td:nth-child(1)').textContent;
+                let description = parentRow.querySelector('td:nth-child(2)').textContent;
+                let status = parentRow.querySelector('.statusTr .span-progres').textContent;
+
+                // Display the task description section
+                let descriptionSection = document.querySelector('.pop-description');
+                descriptionSection.style.display = 'flex';
+
+                // Populate the description section with the task details
+                descriptionSection.innerHTML = `
+                    <div class="contour">
+                        <div class="form">
+                            <h2>Task description</h2>
+                            <div class="vue-div">
+                                <div>
+                                    <div>Title :</div>
+                                    <div>${title}</div>
+                                </div>
+                                <div>
+                                    <div>Description :</div>
+                                    <div>${description}</div>
+                                </div>
+                                <div>
+                                    <div>Status :</div>
+                                    <div>${status}</div>
+                                </div>                    
+                            </div>
+                            <button type="button" class="button-fermer">Fermer</button>
+                        </div>
+                    </div>
+                `;
+
+                // Add functionality to close the description section
+                document.querySelector('.button-fermer').addEventListener('click', () => {
+                    descriptionSection.style.display = 'none';
+                });
+            });
+        });
 
 
     }
@@ -103,12 +150,12 @@ export class TodoList {
         const title = new FormData(e.currentTarget).get('title').toString()
         const description = new FormData(e.currentTarget).get('description').toString()
         const status = new FormData(e.currentTarget).get('status').toString()
-        
-        if(title === "" || description === "" || status === ""){
+
+        if (title === "" || description === "" || status === "") {
             return
         }
         const todo = {
-            id:Date.now(),
+            id: Date.now(),
             title,
             description,
             status
@@ -124,18 +171,35 @@ export class TodoList {
         popAjout.style.display = 'none'
     }
 
-    #onUpdate(){
-        localStorage.setItem('todos', JSON.stringify(this.#todos) )
+    #onUpdate() {
+        localStorage.setItem('todos', JSON.stringify(this.#todos))
     }
+
+    removeTodoById(id) {
+        // Remove the todo from the internal array
+        this.#todos = this.#todos.filter(todo => todo.id !== id);
+        
+        // Update the local storage
+        this.#onUpdate();
+    }
+
 }
 
 
 class TodoListItem {
 
     #element
+     /**@type {Todo} */
+     #todo
+
+     /**@type {TodoList} */
+     #parent
 
     /**@type {Todo} */
-    constructor(todo) {
+    constructor(todo,parent) {
+
+        this.#todo = todo;
+        this.#parent = parent;
 
         //a tr for each task
         const tr = createElement('tr')
@@ -150,7 +214,7 @@ class TodoListItem {
 
 
         //td for task status
-        const td3 = createElement('td',{
+        const td3 = createElement('td', {
             class: 'statusTr'
         })
         const statut_span = createElement('span', {
@@ -164,13 +228,13 @@ class TodoListItem {
         const td4 = createElement('td', {
             class: 'icons'
         })
-        const viewButton = createElement('button',{
+        const viewButton = createElement('button', {
             class: "viewButton"
         })
         viewButton.innerHTML = '<i class="fa fa-eye" aria-hidden="true"></i>'
 
-        const editButton = createElement('button',{
-            class:"viewButton"
+        const editButton = createElement('button', {
+            class: "viewButton"
         })
         editButton.innerHTML = '<i class="fas fa-pen-square" aria-hidden="true"></i>'
 
@@ -188,14 +252,14 @@ class TodoListItem {
 
         //Adding eventListener to the delete button
         deleteButton.addEventListener('click', e => this.remove(e))
-       
+
         this.#element = tr
     }
 
     /**
      * @return {HTMLElement}  
      */
-    get element(){
+    get element() {
         return this.#element
     }
 
@@ -205,6 +269,9 @@ class TodoListItem {
     remove(e) {
         e.preventDefault()
         this.#element.remove()
+
+        // Remove the task from the parent list and update local storage
+        this.#parent.removeTodoById(this.#todo.id);
     }
 
 }
