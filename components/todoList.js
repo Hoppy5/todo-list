@@ -90,7 +90,7 @@ export class TodoList {
         }
 
         //view task
-        
+
 
     }
 
@@ -118,6 +118,10 @@ export class TodoList {
         this.#todos.push(todo)
         this.#onUpdate()
         form.reset()
+
+        // dispaying adding todo form
+        let popAjout = document.querySelector('.pop-ajout')
+        popAjout.style.display = 'none'
     }
 
     #onUpdate(){
