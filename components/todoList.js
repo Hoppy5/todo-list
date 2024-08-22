@@ -1,4 +1,4 @@
-import { createElement, displayFormDiv } from "../functions/dom.js"
+import { createElement} from "../functions/dom.js"
 
 /**
  * @typedef {object} Todo
@@ -7,11 +7,13 @@ import { createElement, displayFormDiv } from "../functions/dom.js"
  * @property {string} description
  * @property {string} status
  */
-
 export class TodoList {
 
     /**@type {Todo[]} */
     #todos = []
+
+    /**@type {HTMLtbodyElement} */
+    #listElement = []
 
     /** 
      * @param {Todo[]} todos 
@@ -54,22 +56,40 @@ export class TodoList {
         </div>        
         `
         // Loop for generating todos
-        const tbody = document.querySelector('tbody')
+       this.#listElement = document.querySelector('tbody')
         for (const todo of this.#todos) {
             const t = new TodoListItem(todo)
-            t.appendTo(tbody)    
+            this.#listElement.append(t.element)  
         }
               
         // dispaying adding todo form
         let popAjout = document.querySelector('.pop-ajout')
         document.querySelector('.newtask').addEventListener('click', function () {
             popAjout.style.display = 'flex'
-            displayFormDiv(popAjout)      
-
-            // adding a new task
-            document.querySelector('#addingForm').addEventListener('submit', e => this.onSubmit(e))
         })
 
+        //undiisplaying adding form
+        document.querySelector('.fermer').addEventListener('click',()=>{
+            popAjout.style.display = 'none'
+        })
+      
+        // adding a new task
+        document.querySelector('#addingForm').addEventListener('submit', e => this.#onSubmit(e))
+        
+        //chaging span's class
+        let statusSpans = document.querySelectorAll('.statusTr span')
+        for (const span of statusSpans) {
+            if (span.innerText === 'not started') {
+                span.classList.remove('span-progres')
+                span.classList.add('span-not')
+            }
+            if(span.innerText === 'done'){
+                span.classList.remove('span-progres')
+                span.classList.add('span-done')
+            }
+        }
+
+        //view task
         
 
     }
@@ -77,13 +97,31 @@ export class TodoList {
     /**
     * @param {SubmitEvent} e
     */
-    onSubmit(e) {
+    #onSubmit(e) {
         e.preventDefault()
+        const form = e.currentTarget
         const title = new FormData(e.currentTarget).get('title').toString()
         const description = new FormData(e.currentTarget).get('description').toString()
         const status = new FormData(e.currentTarget).get('status').toString()
         
-        if(title === "")
+        if(title === "" || description === "" || status === ""){
+            return
+        }
+        const todo = {
+            id:Date.now(),
+            title,
+            description,
+            status
+        }
+        const item = new TodoListItem(todo)
+        this.#listElement.prepend(item.element)
+        this.#todos.push(todo)
+        this.#onUpdate()
+        form.reset()
+    }
+
+    #onUpdate(){
+        localStorage.setItem('todos', JSON.stringify(this.#todos) )
     }
 }
 
@@ -108,7 +146,9 @@ class TodoListItem {
 
 
         //td for task status
-        const td3 = createElement('td')
+        const td3 = createElement('td',{
+            class: 'statusTr'
+        })
         const statut_span = createElement('span', {
             class: 'span-progres'
         })
@@ -120,10 +160,14 @@ class TodoListItem {
         const td4 = createElement('td', {
             class: 'icons'
         })
-        const viewButton = createElement('button')
+        const viewButton = createElement('button',{
+            class: "viewButton"
+        })
         viewButton.innerHTML = '<i class="fa fa-eye" aria-hidden="true"></i>'
 
-        const editButton = createElement('button')
+        const editButton = createElement('button',{
+            class:"viewButton"
+        })
         editButton.innerHTML = '<i class="fas fa-pen-square" aria-hidden="true"></i>'
 
         const deleteButton = createElement('button')
@@ -140,16 +184,15 @@ class TodoListItem {
 
         //Adding eventListener to the delete button
         deleteButton.addEventListener('click', e => this.remove(e))
-
+       
         this.#element = tr
     }
 
     /**
-     * @param {HTMLElement} parentElement 
+     * @return {HTMLElement}  
      */
-    appendTo(parentElement) {
-
-        parentElement.append(this.#element)
+    get element(){
+        return this.#element
     }
 
     /**
@@ -159,4 +202,5 @@ class TodoListItem {
         e.preventDefault()
         this.#element.remove()
     }
+
 }
