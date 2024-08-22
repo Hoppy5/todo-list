@@ -58,17 +58,17 @@ export class TodoList {
         // Loop for generating todos
         this.#listElement = document.querySelector('tbody')
         for (const todo of this.#todos) {
-            const t = new TodoListItem(todo,this)
+            const t = new TodoListItem(todo, this)
             this.#listElement.append(t.element)
         }
 
-        // dispaying adding todo form
+        // dispaying adding form
         let popAjout = document.querySelector('.pop-ajout')
         document.querySelector('.newtask').addEventListener('click', function () {
             popAjout.style.display = 'flex'
         })
 
-        //undiisplaying adding form
+        //undisplaying adding form
         document.querySelector('.fermer').addEventListener('click', () => {
             popAjout.style.display = 'none'
         })
@@ -88,8 +88,6 @@ export class TodoList {
         // adding a new task
         document.querySelector('#addingForm').addEventListener('submit', e => this.#onSubmit(e))
 
-
-        
         // Add event listener to all view buttons
         document.querySelectorAll('.viewButton').forEach(button => {
             button.addEventListener('click', e => {
@@ -101,7 +99,10 @@ export class TodoList {
                 // Extract the task details from the parent row
                 let title = parentRow.querySelector('td:nth-child(1)').textContent;
                 let description = parentRow.querySelector('td:nth-child(2)').textContent;
-                let status = parentRow.querySelector('.statusTr .span-progres').textContent;
+
+                // Handle any status class (span-progres, span-not, span-done)
+                let statusSpan = parentRow.querySelector('.statusTr span');
+                let status = statusSpan ? statusSpan.textContent : 'unknown';
 
                 // Display the task description section
                 let descriptionSection = document.querySelector('.pop-description');
@@ -109,27 +110,27 @@ export class TodoList {
 
                 // Populate the description section with the task details
                 descriptionSection.innerHTML = `
-                    <div class="contour">
-                        <div class="form">
-                            <h2>Task description</h2>
-                            <div class="vue-div">
-                                <div>
-                                    <div>Title :</div>
-                                    <div>${title}</div>
-                                </div>
-                                <div>
-                                    <div>Description :</div>
-                                    <div>${description}</div>
-                                </div>
-                                <div>
-                                    <div>Status :</div>
-                                    <div>${status}</div>
-                                </div>                    
-                            </div>
-                            <button type="button" class="button-fermer">Fermer</button>
+            <div class="contour">
+                <div class="form">
+                    <h2>Task description</h2>
+                    <div class="vue-div">
+                        <div>
+                            <div>Title :</div>
+                            <div>${title}</div>
                         </div>
+                        <div>
+                            <div>Description :</div>
+                            <div>${description}</div>
+                        </div>
+                        <div>
+                            <div>Status :</div>
+                            <div>${status}</div>
+                        </div>                    
                     </div>
-                `;
+                    <button type="button" class="button-fermer">Fermer</button>
+                </div>
+            </div>
+        `;
 
                 // Add functionality to close the description section
                 document.querySelector('.button-fermer').addEventListener('click', () => {
@@ -137,7 +138,6 @@ export class TodoList {
                 });
             });
         });
-
 
     }
 
@@ -178,9 +178,49 @@ export class TodoList {
     removeTodoById(id) {
         // Remove the todo from the internal array
         this.#todos = this.#todos.filter(todo => todo.id !== id);
-        
+
         // Update the local storage
         this.#onUpdate();
+    }
+
+    updateTodo(id) {
+        let currentTodo = this.#todos.filter(todo => todo.id === id)
+
+        //Display the task description section
+        let descriptionSection = document.querySelector('.pop-ajout');
+        descriptionSection.style.display = 'flex';
+
+        // Populate the description section with the task details
+        descriptionSection.innerHTML = `
+                <div class="contour">
+                    <div class="form" >
+                        <div class="title">
+                            <h2>New task</h2>
+                            <div class="fermer">
+                                <i class="fa fa-times" aria-hidden="true"></i>
+                            </div>
+                        </div>
+                        <form action="" name="FormData" id="addingForm">
+                            <input class="input" name="title" type="text" placeholder="Title"  required value = "${currentTodo.tite}">
+
+                            <textarea class="text-area" name="description" placeholder="Description" required value = "${currentTodo.description}></textarea>
+
+                            <select name="status" id="">
+                                <option value="not started">not started</option>
+                                <option value="in progress">in progress</option>
+                                <option value="done">done</option>
+                            </select>
+                            <button  id="saveButton">Enregistrer </button>
+                        </form>
+                    </div>
+                </div>
+                `;
+
+        // Add functionality to close the description section
+        document.querySelector('.button-fermer').addEventListener('click', () => {
+            descriptionSection.style.display = 'none';
+        });
+    
     }
 
 }
@@ -189,14 +229,14 @@ export class TodoList {
 class TodoListItem {
 
     #element
-     /**@type {Todo} */
-     #todo
+    /**@type {Todo} */
+    #todo
 
-     /**@type {TodoList} */
-     #parent
+    /**@type {TodoList} */
+    #parent
 
     /**@type {Todo} */
-    constructor(todo,parent) {
+    constructor(todo, parent) {
 
         this.#todo = todo;
         this.#parent = parent;
@@ -234,7 +274,7 @@ class TodoListItem {
         viewButton.innerHTML = '<i class="fa fa-eye" aria-hidden="true"></i>'
 
         const editButton = createElement('button', {
-            class: "viewButton"
+            class: "editButton"
         })
         editButton.innerHTML = '<i class="fas fa-pen-square" aria-hidden="true"></i>'
 
@@ -252,7 +292,7 @@ class TodoListItem {
 
         //Adding eventListener to the delete button
         deleteButton.addEventListener('click', e => this.remove(e))
-
+        editButton.addEventListener('click', e => this.update(e))
         this.#element = tr
     }
 
@@ -269,6 +309,12 @@ class TodoListItem {
     remove(e) {
         e.preventDefault()
         this.#element.remove()
+
+        // Remove the task from the parent list and update local storage
+        this.#parent.removeTodoById(this.#todo.id);
+    }
+    update(e) {
+        e.preventDefault()
 
         // Remove the task from the parent list and update local storage
         this.#parent.removeTodoById(this.#todo.id);
